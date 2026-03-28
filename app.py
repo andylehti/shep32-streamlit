@@ -1947,6 +1947,14 @@ def printSelfChecks():
     print("failed=", failed)
     return {"passed": passed, "failed": failed, "tests": tests}
 
+# =========================
+# Streamlit app
+# Build Version: 60D
+# NOTES: UI wrapper only. Does not change the 60D core. Supports SHEP32, SHEP333, detached mode, signing, and 100KB text limit.
+# =========================
+
+# import streamlit as st
+
 gMaxInputBytes = 100 * 1024
 
 def clean(s):
@@ -1955,7 +1963,7 @@ def clean(s):
 def utf8Size(s):
     return len((s or "").encode("utf-8"))
 
-def checkTextLimit(s, label="Input text"):
+def checkTextLimit(s, label = "Input text"):
     n = utf8Size(s)
     if n > gMaxInputBytes:
         raise ValueError(f"{label} exceeds 100KB limit ({n} bytes).")
@@ -2009,20 +2017,19 @@ if mode == "Encrypt":
     st.subheader("Encrypt")
     text = st.text_area("Input text", height = 220)
     keyInput = st.text_input("Key or passphrase (leave blank to auto-generate)")
+
     c1, c2, c3 = st.columns(3)
     with c1:
         keyMode = st.selectbox("Key mode", [0, 333], format_func = modeName)
     with c2:
         compress = st.checkbox("Compress", value = True)
     with c3:
-        count = st.number_input("SHEP333 inserts", min_value = 1, max_value = 8, value = 8, step = 1)
-
-    c4, c5, c6 = st.columns(3)
-    with c4:
         chunkSize = st.number_input("Chunk size", min_value = 2048, value = 2048, step = 2048)
-    with c5:
+
+    c4, c5 = st.columns(2)
+    with c4:
         powBits = st.number_input("Proof-of-work bits", min_value = 0, value = 0, step = 1)
-    with c6:
+    with c5:
         powStart = st.number_input("Proof-of-work start nonce", min_value = 0, value = 0, step = 1)
 
     if st.button("Encrypt Data"):
@@ -2035,7 +2042,7 @@ if mode == "Encrypt":
                 text,
                 k = clean(keyInput) or None,
                 keyMode = coreMode(keyMode),
-                count = int(count),
+                count = 8,
                 detached = False,
                 compress = bool(compress),
                 chunkSize = int(chunkSize),
@@ -2058,11 +2065,8 @@ elif mode == "Decrypt":
     st.subheader("Decrypt")
     data = st.text_area("Encrypted text", height = 220)
     keyInput = st.text_input("Key or passphrase")
-    c1, c2 = st.columns(2)
-    with c1:
-        keyMode = st.selectbox("Key mode", [0, 333], key = "decMode", format_func = modeName)
-    with c2:
-        count = st.number_input("SHEP333 inserts", min_value = 1, max_value = 8, value = 8, step = 1, key = "decCount")
+
+    keyMode = st.selectbox("Key mode", [0, 333], key = "decMode", format_func = modeName)
 
     if st.button("Decrypt Data"):
         try:
@@ -2075,7 +2079,7 @@ elif mode == "Decrypt":
                 data,
                 clean(keyInput),
                 keyMode = coreMode(keyMode),
-                count = int(count),
+                count = 8,
                 progress = progress,
             )
             st.markdown("**Decrypted text**")
@@ -2091,20 +2095,19 @@ elif mode == "Detached Encrypt":
     st.subheader("Detached Encrypt")
     text = st.text_area("Input text", height = 220)
     keyInput = st.text_input("Key or passphrase (leave blank to auto-generate)", key = "detEncKey")
+
     c1, c2, c3 = st.columns(3)
     with c1:
         keyMode = st.selectbox("Key mode", [0, 333], key = "detEncMode", format_func = modeName)
     with c2:
         compress = st.checkbox("Compress", value = True, key = "detEncCompress")
     with c3:
-        count = st.number_input("SHEP333 inserts", min_value = 1, max_value = 8, value = 8, step = 1, key = "detEncCount")
-
-    c4, c5, c6 = st.columns(3)
-    with c4:
         chunkSize = st.number_input("Chunk size", min_value = 2048, value = 2048, step = 2048, key = "detEncChunk")
-    with c5:
+
+    c4, c5 = st.columns(2)
+    with c4:
         powBits = st.number_input("Proof-of-work bits", min_value = 0, value = 0, step = 1, key = "detEncPowBits")
-    with c6:
+    with c5:
         powStart = st.number_input("Proof-of-work start nonce", min_value = 0, value = 0, step = 1, key = "detEncPowStart")
 
     if st.button("Detached Encrypt Data"):
@@ -2117,7 +2120,7 @@ elif mode == "Detached Encrypt":
                 text,
                 k = clean(keyInput) or None,
                 keyMode = coreMode(keyMode),
-                count = int(count),
+                count = 8,
                 detached = True,
                 compress = bool(compress),
                 chunkSize = int(chunkSize),
@@ -2143,11 +2146,8 @@ elif mode == "Detached Decrypt":
     metaText = st.text_area("Meta", height = 160)
     bodyText = st.text_area("Body", height = 220)
     keyInput = st.text_input("Key or passphrase", key = "detDecKey")
-    c1, c2 = st.columns(2)
-    with c1:
-        keyMode = st.selectbox("Key mode", [0, 333], key = "detDecMode", format_func = modeName)
-    with c2:
-        count = st.number_input("SHEP333 inserts", min_value = 1, max_value = 8, value = 8, step = 1, key = "detDecCount")
+
+    keyMode = st.selectbox("Key mode", [0, 333], key = "detDecMode", format_func = modeName)
 
     if st.button("Detached Decrypt Data"):
         try:
@@ -2162,7 +2162,7 @@ elif mode == "Detached Decrypt":
                 bodyText,
                 clean(keyInput),
                 keyMode = coreMode(keyMode),
-                count = int(count),
+                count = 8,
                 meta = metaText,
                 progress = progress,
             )
@@ -2178,11 +2178,8 @@ elif mode == "Detached Decrypt":
 elif mode == "Generate Key":
     st.subheader("Generate Key")
     source = st.text_area("Input source (leave blank for random source)", height = 160)
-    c1, c2 = st.columns(2)
-    with c1:
-        keyMode = st.selectbox("Key mode", [0, 333], key = "genKeyMode", format_func = modeName)
-    with c2:
-        count = st.number_input("SHEP333 inserts", min_value = 1, max_value = 8, value = 8, step = 1, key = "genCount")
+
+    keyMode = st.selectbox("Key mode", [0, 333], key = "genKeyMode", format_func = modeName)
 
     if st.button("Generate Key"):
         try:
@@ -2191,7 +2188,7 @@ elif mode == "Generate Key":
             out = generateKey(
                 x = clean(source) or None,
                 mode = genMode(keyMode),
-                count = int(count),
+                count = 8,
             )
             st.markdown("**Generated key**")
             st.code(out)
@@ -2205,11 +2202,8 @@ elif mode == "Generate Key":
 elif mode == "Generate Public Key":
     st.subheader("Generate Public Key")
     keyInput = st.text_input("Private key or passphrase")
-    c1, c2 = st.columns(2)
-    with c1:
-        keyMode = st.selectbox("Key mode", [0, 333], key = "pubMode", format_func = modeName)
-    with c2:
-        count = st.number_input("SHEP333 inserts", min_value = 1, max_value = 8, value = 8, step = 1, key = "pubCount")
+
+    keyMode = st.selectbox("Key mode", [0, 333], key = "pubMode", format_func = modeName)
 
     if st.button("Generate Public Key"):
         try:
@@ -2218,7 +2212,7 @@ elif mode == "Generate Public Key":
             out = generatePublicKey(
                 clean(keyInput),
                 keyMode = coreMode(keyMode),
-                count = int(count),
+                count = 8,
             )
             st.markdown("**Public key**")
             st.code(out)
@@ -2233,11 +2227,8 @@ elif mode == "Sign":
     st.subheader("Sign")
     text = st.text_area("Text to sign", height = 220)
     keyInput = st.text_input("Private key or passphrase", key = "signKey")
-    c1, c2 = st.columns(2)
-    with c1:
-        keyMode = st.selectbox("Key mode", [0, 333], key = "signMode", format_func = modeName)
-    with c2:
-        count = st.number_input("SHEP333 inserts", min_value = 1, max_value = 8, value = 8, step = 1, key = "signCount")
+
+    keyMode = st.selectbox("Key mode", [0, 333], key = "signMode", format_func = modeName)
 
     if st.button("Sign Data"):
         try:
@@ -2250,7 +2241,7 @@ elif mode == "Sign":
                 text,
                 clean(keyInput),
                 keyMode = coreMode(keyMode),
-                count = int(count),
+                count = 8,
             )
             st.markdown("**Signature**")
             st.code(out["signature"])
